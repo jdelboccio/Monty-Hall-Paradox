@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>Monty Hall Planets Experiment</title>
+<style>
+  /* Base reset & fonts */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0;
+    font-family: 'Courier New', Courier, monospace;
+    background: #000;
+    color: #39ff14;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+  #app {
+    max-width: 700px;
+    margin: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #020202;
+    border: 3px solid #39ff14;
+    border-radius: 12px;
+    padding: 18px 24px;
+    box-shadow: 0 0 30px #39ff14dd;
+    position: relative;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-weight: 900;
+    font-size: 2.0rem;
+    color: #39ff14;
+    text-shadow: 0 0 20px #39ff14;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  h2 {
+    font-weight: bold;
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #39ff14;
+    text-shadow: 0 0 20px #39ff14;
+    user-select: none;
+  }
+  .planets {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 24px;
+  }
+  .planet {
+    width: 110px;
+    height: 110px;
+    background: radial-gradient(circle at 30% 30%, #26cc11, #004400 70%);
+    border: 4px solid #39ff14;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #39ff14, inset 0 0 10px #26cc11;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #b9ffb9;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+    user-select: none;
+  }
+  .planet:hover:not(.disabled):not(.opened) {
+    box-shadow: 0 0 25px #7fff7f, inset 0 0 15px #80ff80;
+    background: radial-gradient(circle at 30% 30%, #39ff14, #006600 70%);
+  }
+  .planet.disabled {
+    cursor: default;
+    opacity: 0.4;
+    box-shadow: none;
+  }
+  .planet.opened {
+    background: radial-gradient(circle at 30% 30%, #004400, #001a00 90%);
+    color: #003300;
+    box-shadow: none;
+  }
+  .info-text {
+    max-width: 600px;
+    margin: 16px auto 0 auto;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #33ff33;
+    min-height: 72px;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    user-select: none;
+  }
+  .action-buttons {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+  }
+  button.action-btn {
+    color: #000;
+    background-color: #39ff14;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 12px 28px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #39ff14;
+    transition: background-color 0.3s ease;
+    user-select: none;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  button.action-btn:hover:not(:disabled) {
+    background-color: #6fff57;
+    box-shadow: 0 0 32px #7fff65;
+  }
+  button.action-btn:disabled {
+    background-color: #113311;
+    cursor: not-allowed;
+    box-shadow: none;
+    color: #334433;
+  }
+  #resetGameBtn {
+    margin: 40px auto 0 auto;
+    display: none;
+    width: 200px;
+  }
+  /* Accessible focus ring */
+  .planet:focus, .action-btn:focus {
+    outline: 3px solid #6fff57;
+    outline-offset: 4px;
+  }
+  @media (max-width: 480px) {
+    .planets {
+      gap: 24px;
+    }
+    .planet {
+      width: 90px;
+      height: 90px;
+      font-size: 1rem;
+    }
+    button.action-btn {
+      padding: 10px 24px;
+      font-size: 1rem;
+    }
+  }
+  .footer-text {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a801a;
+    margin-top: 36px;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<div id="app" role="main" aria-live="polite" aria-atomic="true">
+  <header>
+    <h1>Technology Team</h1>
+  </header>
+  <main>
+    <h2>Choose a Planet to Retrieve Valuable Minerals</h2>
+    <p class="info-text" id="gameInfo" aria-live="polite" aria-atomic="true">Select a planet to begin your mission.</p>
+    <div class="planets" role="group" aria-label="Three planets for Monty Hall problem">
+      <div class="planet" id="planet1" tabindex="0" aria-pressed="false" role="button" aria-label="Planet 1">
+        <div class="label">Planet 1</div>
+      </div>
+      <div class="planet" id="planet2" tabindex="0" aria-pressed="false" role="button" aria-label="Planet 2">
+        <div class="label">Planet 2</div>
+      </div>
+      <div class="planet" id="planet3" tabindex="0" aria-pressed="false" role="button" aria-label="Planet 3">
+        <div class="label">Planet 3</div>
+      </div>
+    </div>
+    <div class="action-buttons" id="actionButtons" style="display:none;">
+      <button class="action-btn" id="stayBtn" aria-label="Stay with original planet choice">Stay</button>
+      <button class="action-btn" id="switchBtn" aria-label="Switch to other unopened planet">Switch</button>
+    </div>
+    <button id="resetGameBtn" class="action-btn">Explore Again</button>
+    <div class="footer-text">Powered by Straticon's Technology Team</div>
+  </main>
+</div>
+<script>
+(() => {
+  const planets = [
+    document.getElementById('planet1'),
+    document.getElementById('planet2'),
+    document.getElementById('planet3'),
+  ];
+  const gameInfo = document.getElementById('gameInfo');
+  const actionButtons = document.getElementById('actionButtons');
+  const stayBtn = document.getElementById('stayBtn');
+  const switchBtn = document.getElementById('switchBtn');
+  const resetGameBtn = document.getElementById('resetGameBtn');
+
+  let prizePlanet = null;
+  let playerChoice = null;
+  let revealedPlanet = null;
+  let gameState = 'pick'; // pick, reveal, decision, finished
+
+  function resetGame() {
+    prizePlanet = Math.floor(Math.random() * 3);
+    playerChoice = null;
+    revealedPlanet = null;
+    gameState = 'pick';
+    gameInfo.textContent = 'Select a planet to begin your mission.';
+    actionButtons.style.display = 'none';
+    resetGameBtn.style.display = 'none';
+
+    planets.forEach((planet, i) => {
+      planet.innerHTML = '<div class="label">Planet ' + (i + 1) + '</div>';
+      planet.classList.remove('disabled', 'opened');
+      planet.setAttribute('aria-pressed', 'false');
+      planet.style.cursor = 'pointer';
+      planet.style.boxShadow = '0 0 15px #39ff14, inset 0 0 10px #26cc11';
+      planet.style.background = 'radial-gradient(circle at 30% 30%, #26cc11, #004400 70%)';
+      planet.style.color = '#b9ffb9';
+    });
+  }
+
+  function revealPlanet() {
+    for (let i = 0; i < planets.length; i++) {
+      if (i !== prizePlanet && i !== playerChoice) {
+        revealedPlanet = i;
+        const planet = planets[i];
+        planet.classList.add('opened', 'disabled');
+        planet.innerHTML = '<div class="label">Empty Planet</div>';
+        planet.style.cursor = 'default';
+        planet.style.boxShadow = 'none';
+        planet.style.background = 'radial-gradient(circle at 30% 30%, #112211, #001100 90%)';
+        planet.style.color = '#004400';
+        break;
+      }
+    }
+  }
+
+  function handlePlanetClick(index) {
+    if (gameState !== 'pick') return;
+
+    playerChoice = index;
+    planets.forEach((planet, i) => {
+      if (i === playerChoice) {
+        planet.setAttribute('aria-pressed', 'true');
+        planet.style.boxShadow = '0 0 30px #f1c40f, inset 0 0 20px #f1c40f';
+      } else {
+        planet.setAttribute('aria-pressed', 'false');
+        planet.style.boxShadow = '0 0 15px #39ff14, inset 0 0 10px #26cc11';
+      }
+    });
+    gameState = 'reveal';
+    gameInfo.textContent = `You chose Planet ${playerChoice + 1}. Revealing an empty planet...`;
+    setTimeout(() => {
+      revealPlanet();
+      gameInfo.textContent = `Planet ${revealedPlanet + 1} is empty. Stay or switch?`;
+      actionButtons.style.display = 'flex';
+    }, 1300);
+  }
+
+  function playerDecision(switchChoice) {
+    gameState = 'finished';
+    actionButtons.style.display = 'none';
+
+    let finalChoice = playerChoice;
+    if (switchChoice) {
+      for (let i = 0; i < planets.length; i++) {
+        if (i !== playerChoice && i !== revealedPlanet) {
+          finalChoice = i;
+          break;
+        }
+      }
+    }
+
+    planets.forEach((planet, i) => {
+      planet.classList.add('opened');
+      planet.style.cursor = 'default';
+      planet.setAttribute('aria-pressed', 'false');
+      if (i === prizePlanet) {
+        planet.innerHTML = '<div class="label">Valuable Minerals</div>';
+        planet.style.boxShadow = '0 0 30px #27ae60, inset 0 0 16px #27ae60';
+        planet.style.background = 'radial-gradient(circle at 30% 30%, #27ae60, #014d00 90%)';
+        planet.style.color = 'white';
+      } else {
+        planet.style.boxShadow = 'none';
+        planet.innerHTML = '<div class="label">Empty Planet</div>';
+        planet.style.background = 'radial-gradient(circle at 30% 30%, #112211, #001100 90%)';
+        planet.style.color = '#004400';
+      }
+    });
+
+    if (finalChoice === prizePlanet) {
+      gameInfo.textContent = `You found valuable minerals on Planet ${finalChoice + 1}!`;
+    } else {
+      gameInfo.textContent = `Planet ${finalChoice + 1} was empty. Try again.`;
+    }
+    resetGameBtn.style.display = 'inline-block';
+  }
+
+  planets.forEach((planet, index) => {
+    planet.addEventListener('click', () => handlePlanetClick(index));
+    planet.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handlePlanetClick(index);
+      }
+    });
+  });
+
+  stayBtn.addEventListener('click', () => playerDecision(false));
+  switchBtn.addEventListener('click', () => playerDecision(true));
+  resetGameBtn.addEventListener('click', () => resetGame());
+
+  resetGame();
+})();
+</script>
+</body>
+</html>
